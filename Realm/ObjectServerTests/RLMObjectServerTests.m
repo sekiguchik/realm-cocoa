@@ -1262,8 +1262,8 @@
     expectation = [self expectationWithDescription:@"A new permission offer response will be processed by the server"];
     r = [RLMSyncPermissionOfferResponse objectsInRealm:managementRealm where:@"id = %@", permissionOfferResponse.id];
     token = [r addNotificationBlock:^(RLMResults *results,
-                                                            __unused RLMCollectionChange *change,
-                                                             __unused NSError *error) {
+                                      __unused RLMCollectionChange *change,
+                                      __unused NSError *error) {
         if (results.count == 0) {
             return;
         }
@@ -1290,6 +1290,26 @@
     [token stop];
 
     XCTAssertNotNil([self openRealmForURL:[NSURL URLWithString:responseRealmUrl] user:userB]);
+
+    expectation = [self expectationWithDescription:@"A new permission object will be added since permissin offer was accepted"];
+
+    RLMRealm *permissionRealm = [userB permissionRealmWithError:&error];
+    XCTAssertNotNil(permissionRealm);
+    XCTAssertNil(error, @"Error when opening permission Realm: %@", error);
+
+    r = [RLMSyncPermission allObjectsInRealm:permissionRealm];
+    token = [r addNotificationBlock:^(RLMResults * _Nullable results,
+                                      __unused RLMCollectionChange * _Nullable change,
+                                      __unused NSError * _Nullable error) {
+        RLMSyncPermission *permission = results[0];
+        XCTAssertEqual(permission.mayRead, YES);
+        XCTAssertEqual(permission.mayWrite, YES);
+        XCTAssertEqual(permission.mayManage, NO);
+    }];
+
+    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+
+    [token stop];
 }
 
 /// Failed to process a permission offer response object due to `token` is invalid
