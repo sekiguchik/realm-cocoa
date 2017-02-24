@@ -169,6 +169,8 @@
 
 @implementation AggregateObject
 @end
+@implementation AggregateArrayObject
+@end
 
 #pragma mark PrimaryStringObject
 

@@ -7,7 +7,8 @@ x.x.x Release notes (yyyy-MM-dd)
 
 ### Enhancements
 
-* None.
+* Add RLMResults's collection aggregate methods to RLMArray.
+* Add support for calling the aggregate methods on unmanaged Lists.
 
 ### Bugfixes
 
