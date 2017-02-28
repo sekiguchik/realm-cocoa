@@ -152,7 +152,8 @@ static NSUInteger getRowForObjectWithPrimaryKey(RLMClassInfo const& info, id pri
 
     switch (primaryProperty.type) {
         case RLMPropertyTypeString:
-            return info.table()->find_first_string(primaryPropertyColumn, RLMStringDataWithNSString(primaryValue));
+            return info.table()->find_first_string(primaryPropertyColumn,
+                                                   RLMStringDataWithNSString(primaryValue));
 
         case RLMPropertyTypeInt:
             if (primaryValue) {
@@ -180,38 +181,35 @@ static NSUInteger createRowForObjectWithPrimaryKey(RLMClassInfo const& info, id 
     RLMProperty *const primaryProperty = info.propertyForPrimaryKey();
     const NSUInteger primaryColumnIndex = info.tableColumn(primaryProperty);
 
-    // create row
-    const NSUInteger rowIndex = createRowForObject(info);
-    Row row = info.table()->get(rowIndex);
-
-    // set value for primary key
     validateValueForProperty(primaryValue, primaryProperty);
     primaryValue = RLMCoerceToNil(primaryValue);
 
+    auto& table = *info.table();
     try {
+        size_t row = table.add_empty_row();
         switch (primaryProperty.type) {
             case RLMPropertyTypeString:
                 REALM_ASSERT_DEBUG(!primaryValue || [primaryValue isKindOfClass:NSString.class]);
-                row.set_string_unique(primaryColumnIndex, RLMStringDataWithNSString(primaryValue));
+                table.set_string_unique(primaryColumnIndex, row, RLMStringDataWithNSString(primaryValue));
                 break;
 
             case RLMPropertyTypeInt:
                 if (primaryValue) {
                     REALM_ASSERT_DEBUG([primaryValue isKindOfClass:NSNumber.class]);
-                    row.set_int_unique(primaryColumnIndex, [primaryValue longLongValue]);
+                    table.set_int_unique(primaryColumnIndex, row, [primaryValue longLongValue]);
                 } else {
-                    row.set_null(primaryColumnIndex); // FIXME: Use `set_null_unique` once Core supports it
+                    table.set_null_unique(primaryColumnIndex, row);
                 }
                 break;
 
             default:
                 REALM_UNREACHABLE();
         }
+        return row;
     }
     catch (std::exception const& e) {
         @throw RLMException(e);
     }
-    return rowIndex;
 }
 
 /* If a row exists with the specified primary key value, returns its index. Otherwise, creates a new row with the
@@ -222,7 +220,7 @@ static NSUInteger createRowForObjectWithPrimaryKey(RLMClassInfo const& info, id 
  * Precondition: a write transaction is in progress
  */
 static NSUInteger createOrGetRowForObjectWithPrimaryKey(RLMClassInfo const& info, id primaryValue,
-                                                        bool* foundExisting = nullptr) {
+                                                        bool* foundExisting) {
     REALM_ASSERT_DEBUG(info.propertyForPrimaryKey());
     REALM_ASSERT_DEBUG(info.realm.inWriteTransaction);
 
@@ -350,7 +348,8 @@ void RLMAddObjectToRealm(__unsafe_unretained RLMObjectBase *const object,
     RLMInitializeSwiftAccessorGenerics(object);
 }
 
-RLMObjectBase *RLMCreateObjectInRealmWithValue(RLMRealm *realm, NSString *className, id value, bool createOrUpdate = false) {
+RLMObjectBase *RLMCreateObjectInRealmWithValue(RLMRealm *realm, NSString *className,
+                                               id value, bool createOrUpdate = false) {
     if (createOrUpdate && RLMIsObjectSubclass([value class])) {
         RLMObjectBase *obj = value;
         if ([obj->_objectSchema.className isEqualToString:className] && obj->_realm == realm) {
@@ -512,9 +511,11 @@ id RLMGetObject(RLMRealm *realm, NSString *objectClassName, id key) {
         case PropertyType::String: {
             NSString *string = RLMDynamicCast<NSString>(key);
             if (!key || string) {
-                row = table->find_first_string(primaryProperty->table_column, RLMStringDataWithNSString(string));
+                row = table->find_first_string(primaryProperty->table_column,
+                                               RLMStringDataWithNSString(string));
             } else {
-                @throw RLMException(@"Invalid value '%@' of type '%@' for string primary key.", key, [key class]);
+                @throw RLMException(@"Invalid value '%@' of type '%@' for string primary key.",
+                                    key, [key class]);
             }
             break;
         }
@@ -524,7 +525,8 @@ id RLMGetObject(RLMRealm *realm, NSString *objectClassName, id key) {
             } else if (!key) {
                 row = table->find_first_null(primaryProperty->table_column);
             } else {
-                @throw RLMException(@"Invalid value '%@' of type '%@' for int primary key.", key, [key class]);
+                @throw RLMException(@"Invalid value '%@' of type '%@' for int primary key.",
+                                    key, [key class]);
             }
             break;
         default:
