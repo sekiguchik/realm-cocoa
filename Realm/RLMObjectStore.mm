@@ -139,32 +139,44 @@ static NSUInteger createRowForObject(RLMClassInfo const& info) {
     }
 }
 
+static NSUInteger findRowForPrimaryKey(realm::Table const& table,
+                                       realm::Property const& prop, id value) {
+    if (!value && !prop.is_nullable) {
+        @throw RLMException(@"Invalid null value for non-nullable primary key.");
+    }
+    switch (prop.type) {
+        case PropertyType::String: {
+            NSString *string = RLMDynamicCast<NSString>(value);
+            if (!value || string) {
+                return table.find_first_string(prop.table_column,
+                                               RLMStringDataWithNSString(string));
+            }
+            @throw RLMException(@"Invalid value '%@' of type '%@' for string primary key.",
+                                value, [value class]);
+        }
+        case PropertyType::Int:
+            if (NSNumber *number = RLMDynamicCast<NSNumber>(value)) {
+                return table.find_first_int(prop.table_column, number.longLongValue);
+            }
+            if (!value) {
+                return table.find_first_null(prop.table_column);
+            }
+            @throw RLMException(@"Invalid value '%@' of type '%@' for int primary key.",
+                                value, [value class]);
+        default:
+            REALM_UNREACHABLE();
+    }
+}
+
 /* If a row exists with the specified primary key value, return its index. Otherwise, return `realm::not_found`.
  *
  * Precondition: `info` must refer to a class which has a primary key property
  * Precondition: `primaryValue` is a validated property value that has been coerced to `nil`
  */
 static NSUInteger getRowForObjectWithPrimaryKey(RLMClassInfo const& info, id primaryValue) {
-    REALM_ASSERT_DEBUG(info.propertyForPrimaryKey());
-
-    RLMProperty *const primaryProperty = info.propertyForPrimaryKey();
-    const NSUInteger primaryPropertyColumn = info.tableColumn(primaryProperty);
-
-    switch (primaryProperty.type) {
-        case RLMPropertyTypeString:
-            return info.table()->find_first_string(primaryPropertyColumn,
-                                                   RLMStringDataWithNSString(primaryValue));
-
-        case RLMPropertyTypeInt:
-            if (primaryValue) {
-                return info.table()->find_first_int(primaryPropertyColumn, [primaryValue longLongValue]);
-            } else {
-                return info.table()->find_first_null(primaryPropertyColumn);
-            }
-
-        default:
-            REALM_UNREACHABLE();
-    }
+    REALM_ASSERT_DEBUG(info.objectSchema->primary_key_property());
+    return findRowForPrimaryKey(*info.table(), *info.objectSchema->primary_key_property(),
+                                primaryValue);
 }
 
 /* Create a row with the specified primary key value and return its index.
@@ -212,28 +224,6 @@ static NSUInteger createRowForObjectWithPrimaryKey(RLMClassInfo const& info, id 
     }
 }
 
-/* If a row exists with the specified primary key value, returns its index. Otherwise, creates a new row with the
- * specified primary key value and returns its index. The out parameter `foundExisting` will be set to indicate
- * whether or not a new row was created.
- *
- * Precondition: `info` must refer to a class which has a valid primary key property
- * Precondition: a write transaction is in progress
- */
-static NSUInteger createOrGetRowForObjectWithPrimaryKey(RLMClassInfo const& info, id primaryValue,
-                                                        bool* foundExisting) {
-    REALM_ASSERT_DEBUG(info.propertyForPrimaryKey());
-    REALM_ASSERT_DEBUG(info.realm.inWriteTransaction);
-
-    const NSUInteger existingRow = getRowForObjectWithPrimaryKey(info, primaryValue);
-    if (existingRow == realm::not_found) {
-        *foundExisting = false;
-        return createRowForObjectWithPrimaryKey(info, primaryValue);
-    } else {
-        *foundExisting = true;
-        return existingRow;
-    }
-}
-
 /* If the class has a primary key, calls `valueForProperty` with that key and creates or gets the row with
  * this primary key value. Otherwise if the class has no primary key, creates a new row. The out parameter
  * `foundExisting` will be set to indicate whether or not a new row was created.
@@ -243,25 +233,27 @@ static NSUInteger createOrGetRowForObjectWithPrimaryKey(RLMClassInfo const& info
 template<typename F>
 static NSUInteger createOrGetRowForObject(RLMClassInfo const& info, F valueForProperty,
                                           bool createOrUpdate, bool* foundExisting) {
+    REALM_ASSERT_DEBUG(info.realm.inWriteTransaction);
     // try to get existing row if this class has a primary key
     if (RLMProperty *primaryProperty = info.propertyForPrimaryKey()) {
-        // get primary value
-        const id primaryValue = valueForProperty(primaryProperty);
+        const id primaryValue = RLMCoerceToNil(valueForProperty(primaryProperty));
+        auto row = findRowForPrimaryKey(*info.table(), *info.objectSchema->primary_key_property(),
+                                        primaryValue);
+        if (row == realm::not_found) {
+            *foundExisting = false;
+            return createRowForObjectWithPrimaryKey(info, primaryValue);
+        }
 
-        // search for existing object based on primary key type, creating a new row if one does not exist
-        NSUInteger rowIndex = createOrGetRowForObjectWithPrimaryKey(info, RLMCoerceToNil(primaryValue), foundExisting);
-
-        // ensure that `createOrUpdate` is set if we found an existing row
-        if (*foundExisting && !createOrUpdate) {
+        if (!createOrUpdate) {
             @throw RLMException(@"Can't create object with existing primary key value '%@'.", primaryValue);
         }
-        return rowIndex;
+
+        *foundExisting = true;
+        return row;
     }
-    // if no existing, create row
-    else {
-        *foundExisting = false;
-        return createRowForObject(info);
-    }
+
+    *foundExisting = false;
+    return createRowForObject(info);
 }
 
 void RLMAddObjectToRealm(__unsafe_unretained RLMObjectBase *const object,
@@ -501,38 +493,7 @@ id RLMGetObject(RLMRealm *realm, NSString *objectClassName, id key) {
         return nil;
     }
 
-    key = RLMCoerceToNil(key);
-    if (!key && !primaryProperty->is_nullable) {
-        @throw RLMException(@"Invalid null value for non-nullable primary key.");
-    }
-
-    size_t row = realm::not_found;
-    switch (primaryProperty->type) {
-        case PropertyType::String: {
-            NSString *string = RLMDynamicCast<NSString>(key);
-            if (!key || string) {
-                row = table->find_first_string(primaryProperty->table_column,
-                                               RLMStringDataWithNSString(string));
-            } else {
-                @throw RLMException(@"Invalid value '%@' of type '%@' for string primary key.",
-                                    key, [key class]);
-            }
-            break;
-        }
-        case PropertyType::Int:
-            if (NSNumber *number = RLMDynamicCast<NSNumber>(key)) {
-                row = table->find_first_int(primaryProperty->table_column, number.longLongValue);
-            } else if (!key) {
-                row = table->find_first_null(primaryProperty->table_column);
-            } else {
-                @throw RLMException(@"Invalid value '%@' of type '%@' for int primary key.",
-                                    key, [key class]);
-            }
-            break;
-        default:
-            REALM_UNREACHABLE();
-    }
-
+    size_t row = findRowForPrimaryKey(*table, *primaryProperty, RLMCoerceToNil(key));
     if (row == realm::not_found) {
         return nil;
     }
