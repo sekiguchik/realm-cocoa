@@ -662,6 +662,7 @@
 		29EDB8E01A77070200458D80 /* RLMRealm_Private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RLMRealm_Private.h; sourceTree = "<group>"; };
 		29EDB8E51A7710B700458D80 /* RLMResults_Private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RLMResults_Private.h; sourceTree = "<group>"; };
 		29EDB8E91A7712E500458D80 /* RLMObjectSchema_Private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RLMObjectSchema_Private.h; sourceTree = "<group>"; };
+		3F0338491E6F466D00F9E288 /* RLMAccessor.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = RLMAccessor.hpp; sourceTree = "<group>"; };
 		3F04EA2D1992BEE400C2CE2E /* PerformanceTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PerformanceTests.m; sourceTree = "<group>"; };
 		3F0543E91C56F71500AA5322 /* realm_coordinator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = realm_coordinator.hpp; sourceTree = "<group>"; };
 		3F0543EA1C56F71500AA5322 /* realm_coordinator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = realm_coordinator.cpp; sourceTree = "<group>"; };
@@ -1325,8 +1326,8 @@
 			isa = PBXGroup;
 			children = (
 				1AA5AEA21D98CA5300ED8C27 /* Utility */,
-				E8267FF01D90B8E700E001C7 /* RLMObjectServerTests.m */,
 				1A2713D51E3BBAC4001F6BFC /* RLMAncillaryObjectServerTests.m */,
+				E8267FF01D90B8E700E001C7 /* RLMObjectServerTests.m */,
 				3F73BC881E3A876600FE80B6 /* RLMSyncSessionRefreshHandle+ObjectServerTests.h */,
 				3F73BC891E3A876600FE80B6 /* RLMSyncSessionRefreshHandle+ObjectServerTests.m */,
 				1AA5AE9D1D98A6D800ED8C27 /* RLMSyncTestCase.h */,
@@ -1389,6 +1390,7 @@
 				1AF6EA441D36B1220014EB85 /* Sync */,
 				E8D89B9D1955FC6D00CF2B9A /* Realm.h */,
 				E81A1F631955FC9300FDED82 /* RLMAccessor.h */,
+				3F0338491E6F466D00F9E288 /* RLMAccessor.hpp */,
 				E81A1F641955FC9300FDED82 /* RLMAccessor.mm */,
 				E83591941B3DF05C0035F2F3 /* RLMAnalytics.hpp */,
 				E83591931B3DF05C0035F2F3 /* RLMAnalytics.mm */,
@@ -1472,8 +1474,8 @@
 			children = (
 				023B19F71A423BD20067FB81 /* libc++.dylib */,
 				3F6B89AE19EF40BA004E8EA8 /* librealm-ios.a */,
-				02E334C21A5F3C45009F8810 /* Realm.modulemap */,
 				E81A1F621955FC9300FDED82 /* Realm-Info.plist */,
+				02E334C21A5F3C45009F8810 /* Realm.modulemap */,
 				E81C393E1AE5CE6A00F03B56 /* strip-frameworks.sh */,
 			);
 			name = "Supporting Files";
@@ -2320,6 +2322,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A2713D71E3BBAC8001F6BFC /* RLMAncillaryObjectServerTests.m in Sources */,
 				1A2D7A521DA5BCEC006AD7D6 /* RLMMultiProcessTestCase.m in Sources */,
 				E8267FF11D90B8E700E001C7 /* RLMObjectServerTests.m in Sources */,
 				1AF64DCF1DA3042B0081EB15 /* RLMSyncManager+ObjectServerTests.m in Sources */,
@@ -2329,7 +2332,6 @@
 				E86E61241D91E4E200DC2419 /* RLMTestCase.m in Sources */,
 				3F73BC921E3A877300FE80B6 /* RLMTestUtils.m in Sources */,
 				1AA5AEA11D98C99800ED8C27 /* SwiftObjectServerTests.swift in Sources */,
-				1A2713D71E3BBAC8001F6BFC /* RLMAncillaryObjectServerTests.m in Sources */,
 				1AA5AE981D989BE400ED8C27 /* SwiftSyncTestCase.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
