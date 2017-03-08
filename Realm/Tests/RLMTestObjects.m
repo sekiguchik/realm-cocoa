@@ -52,8 +52,7 @@
 @end
 
 @implementation IndexedStringObject
-+ (NSArray *)indexedProperties
-{
++ (NSArray *)indexedProperties {
     return @[@"stringCol"];
 }
 @end
@@ -67,6 +66,12 @@
 @implementation RequiredPropertiesObject
 + (NSArray *)requiredProperties {
     return @[@"stringCol", @"binaryCol"];
+}
+@end
+
+@implementation IgnoredURLObject
++ (NSArray *)ignoredProperties {
+    return @[@"url"];
 }
 @end
 
@@ -176,7 +181,35 @@
 + (NSString *)primaryKey {
     return @"stringCol";
 }
++ (NSArray *)requiredProperties {
+    return @[@"stringCol"];
+}
 @end
+
+@implementation PrimaryNullableStringObject
++ (NSString *)primaryKey {
+    return @"stringCol";
+}
+@end
+
+@implementation PrimaryIntObject
++ (NSString *)primaryKey {
+    return @"intCol";
+}
+@end
+
+@implementation PrimaryInt64Object
++ (NSString *)primaryKey {
+    return @"int64Col";
+}
+@end
+
+@implementation PrimaryNullableIntObject
++ (NSString *)primaryKey {
+    return @"optIntCol";
+}
+@end
+
 
 #pragma mark ReadOnlyPropertyObject
 
@@ -199,13 +232,11 @@
 @end
 
 @implementation NumberDefaultsObject
-+ (nullable NSDictionary *)defaultPropertyValues {
-    return @{
-             @"intObj" : @1,
++ (NSDictionary *)defaultPropertyValues {
+    return @{@"intObj" : @1,
              @"floatObj" : @2.2f,
              @"doubleObj" : @3.3,
-             @"boolObj" : @NO,
-             };
+             @"boolObj" : @NO};
 }
 @end
 

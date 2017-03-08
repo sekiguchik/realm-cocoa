@@ -105,6 +105,11 @@ RLM_ARRAY_TYPE(IntObject)
 @property NSDate *dateCol;
 @end
 
+@interface IgnoredURLObject : RLMObject
+@property NSString *name;
+@property NSURL *url;
+@end
+
 #pragma mark AllTypesObject
 
 @interface AllTypesObject : RLMObject
@@ -280,8 +285,28 @@ RLM_ARRAY_TYPE(CircleObject);
 @property int intCol;
 @end
 
+@interface PrimaryNullableStringObject : RLMObject
+@property NSString *stringCol;
+@property int intCol;
+@end
+
+@interface PrimaryIntObject : RLMObject
+@property int intCol;
+@end
+RLM_ARRAY_TYPE(PrimaryIntObject);
+
+@interface PrimaryInt64Object : RLMObject
+@property int64_t int64Col;
+@end
+
+@interface PrimaryNullableIntObject : RLMObject
+@property NSNumber<RLMInt> *optIntCol;
+@property int value;
+@end
+
 @interface ReadOnlyPropertyObject : RLMObject
 @property (readonly) NSNumber *readOnlyUnsupportedProperty;
+@property (readonly) int readOnlySupportedProperty;
 @property (readonly) int readOnlyPropertyMadeReadWriteInClassExtension;
 @end
 
