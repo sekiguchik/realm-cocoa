@@ -22,15 +22,6 @@
 
 #pragma mark - Test Objects
 
-@interface OverriddenObjectName : RLMObject
-@property int value;
-@end
-@implementation OverriddenObjectName
-+ (NSString *)_realmObjectName {
-    return @"custom object name";
-}
-@end
-
 @interface IndexedObject : RLMObject
 @property NSString *stringCol;
 @property NSInteger integerCol;
@@ -98,14 +89,6 @@
 
     objectSchema = [RLMObjectSchema schemaForObjectClass:[StringObject class]];
     XCTAssertNil(objectSchema.primaryKeyProperty);
-}
-
-- (void)testObjectName {
-    RLMObjectSchema *objectSchema = [RLMObjectSchema schemaForObjectClass:[StringObject class]];
-    XCTAssertEqualObjects(objectSchema.objectName, @"StringObject");
-
-    objectSchema = [RLMObjectSchema schemaForObjectClass:[OverriddenObjectName class]];
-    XCTAssertEqualObjects(objectSchema.objectName, @"custom object name");
 }
 
 #pragma mark - Schema Discovery
