@@ -352,7 +352,8 @@ void RLMAddObjectToRealm(__unsafe_unretained RLMObjectBase *const object,
     RLMInitializeSwiftAccessorGenerics(object);
 }
 
-RLMObjectBase *RLMCreateObjectInRealmWithValue(RLMRealm *realm, NSString *className, id value, bool createOrUpdate = false) {
+RLMObjectBase *RLMCreateObjectInRealmWithValue(RLMRealm *realm, NSString *className,
+                                               id value, bool createOrUpdate = false) {
     if (createOrUpdate && RLMIsObjectSubclass([value class])) {
         RLMObjectBase *obj = value;
         if ([obj->_objectSchema.className isEqualToString:className] && obj->_realm == realm) {
@@ -363,6 +364,10 @@ RLMObjectBase *RLMCreateObjectInRealmWithValue(RLMRealm *realm, NSString *classN
 
     // verify writable
     RLMVerifyInWriteTransaction(realm);
+
+    if (!value) {
+        @throw RLMException(@"Must provide a non-nil value.");
+    }
 
     // create the object
     auto& info = realm->_info[className];
