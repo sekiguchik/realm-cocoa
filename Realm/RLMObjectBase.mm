@@ -115,12 +115,15 @@ static id validatedObjectForProperty(id obj, RLMProperty *prop, RLMSchema *schem
 
     NSArray *properties = _objectSchema.properties;
     if (NSArray *array = RLMDynamicCast<NSArray>(value)) {
-        if (array.count != properties.count) {
-            @throw RLMException(@"Invalid array input. Number of array elements does not match number of properties.");
+        if (array.count > properties.count) {
+            @throw RLMException(@"Invalid array input: more values (%llu) than properties (%llu).",
+                                (unsigned long long)array.count, (unsigned long long)properties.count);
         }
-        for (NSUInteger i = 0; i < array.count; i++) {
-            id propertyValue = validatedObjectForProperty(array[i], properties[i], schema);
-            [self setValue:RLMCoerceToNil(propertyValue) forKeyPath:[properties[i] name]];
+        NSUInteger i = 0;
+        for (id val in array) {
+            RLMProperty *prop = properties[i++];
+            id propertyValue = validatedObjectForProperty(val, prop, schema);
+            [self setValue:RLMCoerceToNil(propertyValue) forKeyPath:prop.name];
         }
     }
     else if (value) {

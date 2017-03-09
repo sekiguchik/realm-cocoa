@@ -372,23 +372,33 @@ RLMObjectBase *RLMCreateObjectInRealmWithValue(RLMRealm *realm, NSString *classN
 
     // create row, and populate
     if (NSArray *array = RLMDynamicCast<NSArray>(value)) {
+        NSArray *props = info.rlmObjectSchema.properties;
+        if (array.count > props.count) {
+            @throw RLMException(@"Invalid array input: more values (%llu) than properties (%llu).",
+                                (unsigned long long)array.count, (unsigned long long)props.count);
+        }
+
         // get or create our accessor
         bool foundExisting;
-        NSArray *props = info.rlmObjectSchema.properties;
         auto primaryGetter = [=](__unsafe_unretained RLMProperty *const p) {
-            return array[[props indexOfObject:p]];
+            auto index = [props indexOfObject:p];
+            if (index >= array.count) {
+                @throw RLMException(@"Invalid array input: primary key must be present.");
+            }
+            return array[index];
         };
-        object->_row = (*info.table())[createOrGetRowForObject(info, primaryGetter, createOrUpdate, &foundExisting)];
+        object->_row = (*info.table())[createOrGetRowForObject(info, primaryGetter,
+                                                               createOrUpdate, &foundExisting)];
 
         // populate
-        for (NSUInteger i = 0; i < array.count; i++) {
-            RLMProperty *prop = props[i];
+        NSUInteger i = 0;
+        for (id val in array) {
+            RLMProperty *prop = props[i++];
 
             // skip primary key when updating since it doesn't change
             if (prop.isPrimary)
                 continue;
 
-            id val = array[i];
             validateValueForProperty(val, prop);
             RLMDynamicSet(object, prop, RLMCoerceToNil(val), creationOptions);
         }
