@@ -283,7 +283,7 @@ void RLMAddObjectToRealm(__unsafe_unretained RLMObjectBase *const object,
             return;
         }
         // for differing realms users must explicitly create the object in the second realm
-        @throw RLMException(@"Object is already managed by another Realm");
+        @throw RLMException(@"Object is already managed by another Realm. Use create instead to copy it into this Realm.");
     }
     if (object->_observationInfo && object->_observationInfo->hasObservers()) {
         @throw RLMException(@"Cannot add an object with observers to a Realm");
