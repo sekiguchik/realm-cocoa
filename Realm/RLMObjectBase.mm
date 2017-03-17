@@ -128,17 +128,8 @@ static id validatedObjectForProperty(id obj, RLMProperty *prop, RLMSchema *schem
     }
     else if (value) {
         // assume our object is an NSDictionary or an object with kvc properties
-        NSDictionary *defaultValues = nil;
         for (RLMProperty *prop in properties) {
             id obj = RLMValidatedValueForProperty(value, prop.name, _objectSchema.className);
-
-            // get default for nil object
-            if (!obj) {
-                if (!defaultValues) {
-                    defaultValues = RLMDefaultValuesForObjectSchema(_objectSchema);
-                }
-                obj = defaultValues[prop.name];
-            }
 
             // don't set unspecified properties
             if (!obj) {
